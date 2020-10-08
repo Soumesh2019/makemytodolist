@@ -180,6 +180,11 @@ app.get("/user/:userId", (req, res) => {
 app.post("/submit", (req, res) => {
   const userId = req.body.userId;
   const item = req.body.item;
+
+   if(item === "") {
+     res.redirect("/user/"+userId);
+
+   } else {
     userModel.updateOne(
       { _id: userId },
       { $push: { toDoItem: item } },
@@ -192,12 +197,20 @@ app.post("/submit", (req, res) => {
         }
       }
     );
+   }
 });
 
-app.post("/completed", (req, res) => {
-  const index = req.body.index;
-  const array = req.body.array;
-  console.log(index, array);
+app.post("/delete", (req, res) => {
+  const item = req.body.index;
+  const userID = req.body.userID;
+
+  userModel.updateOne({_id: userID}, {$pull: {toDoItem: {$in: [item]}}}, (err, result)=>{
+    if(!err){
+      res.redirect("/user/"+userId)
+    }else {
+      console.log(err);
+    }
+  });
 });
 
 app.post("/logout", (req, res) => {

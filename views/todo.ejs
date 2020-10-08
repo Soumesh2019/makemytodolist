@@ -23,7 +23,12 @@
         <div class="listitems">
           <ul>
             <% itemsArray.forEach((item, index) => { %>
-              <li onclick="onSubmit(index, itemsArray);"><%= item %> Completed</li>
+              <form action="/delete" method="post">
+                <input type="hidden" name="userID" value="<%= userId %>" />
+                <input type="hidden" name="index" value="<%= item %>" />
+                <li><input type="checkbox" name="checkbox" id="checkbox" onchange="this.form.submit()" class="checkbox" class="checkbox"/><%= item %></li>
+              </form>
+              
             <% }) %>
           </ul>
         </div>      
@@ -32,14 +37,5 @@
         <button type="submit">Logout</button>
       </form> 
      </div>
-
-     <script>
-
-       function onSubmit(index, array) { 
-         alert(index, array);
-        }
-
-    
-     </script>
 
     <%- include("partials/footer"); %>

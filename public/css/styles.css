@@ -181,10 +181,20 @@ form.submit button:hover, form.logout button:hover {
   color: #f4f4f4;
   border-bottom: 2px solid #f4f4f4;
   padding: 20px 0;
+  font-style: italic;
 }
 
-.listitems ul li:hover{
-  cursor: pointer;
+input[type='checkbox'] {
+  -webkit-appearance:none;
+  width:20px;
+  height:20px;
+  background:white;
+  margin-right: 30px;
+  border-radius:5px;
+  border:2px solid #555;
+}
+input[type='checkbox']:checked {
+  background: #abd;
 }
 
 /* logout */

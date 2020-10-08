@@ -5,9 +5,35 @@ const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(__dirname+"/public"));
 app.set("view engine", "ejs");
 const saltRounds = 10;
 let isLoggedIn = false;
+let userId = "";
+
+function greeting() {
+  let greetings="";
+  let time = new Date().getHours();
+  if(time >= 00 && time <= 10) {
+    greetings="Good Morning"
+  } else if(time >= 11 && time <= 15) {
+    greetings = "Good Afternoon"
+  } else if(time >= 16 && time <= 21) {
+    greetings="Good Evening"
+  } else if(time >= 22) {
+    greetings="Good Night"
+  }
+  return greetings;
+}
+
+function todaysDate() {
+  let day = new Date().getDate();
+  let month = new Date().getUTCMonth();
+  let year = new Date().getUTCFullYear();
+  let date = day+"-"+month+"-"+year
+
+  return date
+}
 
 mongoose.connect("mongodb://localhost:27017/toDoDB", {
   useNewUrlParser: true,
@@ -33,14 +59,28 @@ const userSchema = new mongoose.Schema({
 const userModel = new mongoose.model("user", userSchema);
 
 app.get("/", (req, res) => {
-  res.render("home");
+  res.render("home", {
+    error:""
+  });
 });
+
+app.get("/todo", (req,res)=> {
+  if(isLoggedIn) {
+   res.redirect("/user/"+userId)
+  } else {
+    res.render("home", {
+      error: "Please Login or Register to continue"
+    })
+  }
+})
 
 // Register The User
 app
   .route("/register")
   .get((req, res) => {
-    res.render("register");
+    res.render("register", {
+      error:""
+    });
   })
   .post((req, res) => {
     const username = req.body.username;
@@ -54,7 +94,7 @@ app
             const user = new userModel({
               username: username,
               email: email,
-              password: hash,
+              password: hash
             });
             user.save((err, result) => {
               if (!err) {
@@ -68,7 +108,9 @@ app
           }
         });
       } else {
-        res.send("User already exists");
+        res.render("register", {
+          error:"User already Exists"
+        })
       }
     });
   });
@@ -77,7 +119,9 @@ app
 app
   .route("/login")
   .get((req, res) => {
-    res.render("login");
+    res.render("login", {
+      error:""
+    });
   })
   .post((req, res) => {
     const email = req.body.email;
@@ -96,12 +140,15 @@ app
             } else if (err) {
               console.log(err);
             } else {
-              res.send("Wrong passsord");
+              res.render("login", {
+                error:'Wrong passsord'
+              });
             }
           });
         } else {
-          console.log("User not Found");
-          res.redirect("/register");
+          res.render("login", {
+            error:"User not Found"
+          })
         }
       } else {
         console.log(err);
@@ -113,13 +160,16 @@ app
 // Todo Section
 app.get("/user/:userId", (req, res) => {
   if (isLoggedIn) {
-    const userId = req.params.userId;
+    userId = req.params.userId;
     userModel.findOne({ _id: userId }, (err, foundUser) => {
       if (!err) {
         res.render("todo", {
           userId: userId,
           name: foundUser.username,
           itemsArray: foundUser.toDoItem,
+          day: greeting(),
+          date: todaysDate(),
+          error:""
         });
       }
     });
@@ -130,27 +180,29 @@ app.get("/user/:userId", (req, res) => {
 app.post("/submit", (req, res) => {
   const userId = req.body.userId;
   const item = req.body.item;
-
-  userModel.updateOne(
-    { _id: userId },
-    { $push: { toDoItem: item } },
-    (err, result) => {
-      if (!err) {
-        res.redirect("/user/" + userId);
-      } else if (err) {
-        console.log(err);
-        res.send(new Error(err));
+    userModel.updateOne(
+      { _id: userId },
+      { $push: { toDoItem: item } },
+      (err, result) => {
+        if (!err) {
+          res.redirect("/user/" + userId);
+        } else if (err) {
+          console.log(err);
+          res.send(new Error(err));
+        }
       }
-    }
-  );
+    );
 });
 
 app.post("/completed", (req, res) => {
+  const index = req.body.index;
+  const array = req.body.array;
+  console.log(index, array);
 });
 
 app.post("/logout", (req, res) => {
   isLoggedIn = false;
-  res.redirect("/login");
+  res.redirect("/");
 });
 
 app.listen(3000, () => console.log("Server is running on 3000"));

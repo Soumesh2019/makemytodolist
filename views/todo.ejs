@@ -1,28 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+<%- include("partials/header"); %>
+
+<title><%= name %> | My Personal ToDo</title>
   </head>
   <body>
-    <h1>Hello <%= name %></h1>
 
-    <form action="/submit" method="post">
-      <label for="item"> Add Item </label>
-      <input type="text" name="item" id="item" />
-      <input type="hidden" name="userId" value="<%= userId %>" />
-      <button type="submit">Add</button>
-    </form>
+    <div class="todoList">
 
-    <ul>
-      <% itemsArray.forEach((item, index)=> { %>
-        <form action="/completed" method="post"></form>
-      <li><%= item %></li>
-      <% }) %>
-    </ul>
-    <form action="/logout" method="post">
-      <button type="submit">Logout</button>
-    </form>
-  </body>
-</html>
+      <div class="greetings">
+        <h3><%= day %>, <%= name %></h3>
+      </div>
+
+      <div class="date">
+        <h4>Today's Date <%= date %></h4>
+      </div>
+
+      <div class="list">
+        <form action="/submit" method="post" class="submit">
+          <input type="text" name="item" id="item" placeholder="Add Item" />
+          <input type="hidden" name="userId" value="<%= userId %>" />
+          <button type="submit" class="add">ADD</button>
+        </form>
+        <div class="listitems">
+          <ul>
+            <% itemsArray.forEach((item, index) => { %>
+              <li onclick="onSubmit(index, itemsArray);"><%= item %> Completed</li>
+            <% }) %>
+          </ul>
+        </div>      
+      </div>
+      <form action="/logout" method="post" class="logout">
+        <button type="submit">Logout</button>
+      </form> 
+     </div>
+
+     <script>
+
+       function onSubmit(index, array) { 
+         alert(index, array);
+        }
+
+    
+     </script>
+
+    <%- include("partials/footer"); %>

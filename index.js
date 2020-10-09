@@ -35,7 +35,7 @@ function todaysDate() {
   return date
 }
 
-mongoose.connect("mongodb://localhost:27017/toDoDB", {
+mongoose.connect("mongodb+srv://admin-sk0564845:xsXsnqCXzYdvXQji@mycluster.m3q9x.mongodb.net/toDoDB", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });

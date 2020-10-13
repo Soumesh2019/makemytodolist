@@ -3,25 +3,25 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
+const cookieParser = require("cookie-parser");
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname+"/public"));
+app.use(express.static(__dirname + "/public"));
 app.set("view engine", "ejs");
+app.use(cookieParser());
 const saltRounds = 10;
-let isLoggedIn = false;
-let userId = "";
 
 function greeting() {
-  let greetings="";
+  let greetings = "";
   let time = new Date().getHours();
-  if(time >= 00 && time <= 10) {
-    greetings="Good Morning"
-  } else if(time >= 11 && time <= 15) {
-    greetings = "Good Afternoon"
-  } else if(time >= 16 && time <= 21) {
-    greetings="Good Evening"
-  } else if(time >= 22) {
-    greetings="Good Night"
+  if (time >= 00 && time <= 10) {
+    greetings = "Good Morning";
+  } else if (time >= 11 && time <= 15) {
+    greetings = "Good Afternoon";
+  } else if (time >= 16 && time <= 21) {
+    greetings = "Good Evening";
+  } else if (time >= 22) {
+    greetings = "Good Night";
   }
   return greetings;
 }
@@ -30,15 +30,18 @@ function todaysDate() {
   let day = new Date().getDate();
   let month = new Date().getUTCMonth();
   let year = new Date().getUTCFullYear();
-  let date = day+"-"+month+"-"+year
+  let date = day + "-" + month + "-" + year;
 
-  return date
+  return date;
 }
 
-mongoose.connect("mongodb+srv://admin-sk0564845:xsXsnqCXzYdvXQji@mycluster.m3q9x.mongodb.net/toDoDB", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(
+  "mongodb+srv://admin-sk0564845:xsXsnqCXzYdvXQji@mycluster.m3q9x.mongodb.net/toDoDB",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -60,26 +63,26 @@ const userModel = new mongoose.model("user", userSchema);
 
 app.get("/", (req, res) => {
   res.render("home", {
-    error:""
+    error: "",
   });
 });
 
-app.get("/todo", (req,res)=> {
-  if(isLoggedIn) {
-   res.redirect("/user/"+userId)
+app.get("/todo", (req, res) => {
+  if (req.cookies["isLoggedIn"] === "true") {
+    res.redirect("/user/" + req.cookies["userId"]);
   } else {
     res.render("home", {
-      error: "Please Login or Register to continue"
-    })
+      error: "Please Login or Register to continue",
+    });
   }
-})
+});
 
 // Register The User
 app
   .route("/register")
   .get((req, res) => {
     res.render("register", {
-      error:""
+      error: "",
     });
   })
   .post((req, res) => {
@@ -94,11 +97,14 @@ app
             const user = new userModel({
               username: username,
               email: email,
-              password: hash
+              password: hash,
             });
             user.save((err, result) => {
               if (!err) {
-                isLoggedIn = true;
+                res.setHeader("set-cookie", [
+                  "isLoggedIn= true; httponly",
+                  `userId= ${result._id}; httponly`,
+                ]);
                 res.redirect("/user/" + result._id);
               }
             });
@@ -109,8 +115,8 @@ app
         });
       } else {
         res.render("register", {
-          error:"User already Exists"
-        })
+          error: "User already Exists",
+        });
       }
     });
   });
@@ -120,7 +126,7 @@ app
   .route("/login")
   .get((req, res) => {
     res.render("login", {
-      error:""
+      error: "",
     });
   })
   .post((req, res) => {
@@ -135,20 +141,23 @@ app
             result
           ) {
             if (result) {
-              isLoggedIn = true;
+              res.setHeader("set-cookie", [
+                "isLoggedIn= true; httponly",
+                `userId= ${foundUser._id}; httponly`,
+              ]);
               res.redirect("/user/" + foundUser._id);
             } else if (err) {
               console.log(err);
             } else {
               res.render("login", {
-                error:'Wrong passsord'
+                error: "Wrong passsord",
               });
             }
           });
         } else {
           res.render("login", {
-            error:"User not Found"
-          })
+            error: "User not Found",
+          });
         }
       } else {
         console.log(err);
@@ -159,7 +168,7 @@ app
 
 // Todo Section
 app.get("/user/:userId", (req, res) => {
-  if (isLoggedIn) {
+  if (req.cookies["isLoggedIn"] === "true") {
     userId = req.params.userId;
     userModel.findOne({ _id: userId }, (err, foundUser) => {
       if (!err) {
@@ -169,7 +178,7 @@ app.get("/user/:userId", (req, res) => {
           itemsArray: foundUser.toDoItem,
           day: greeting(),
           date: todaysDate(),
-          error:""
+          error: "",
         });
       }
     });
@@ -181,10 +190,9 @@ app.post("/submit", (req, res) => {
   const userId = req.body.userId;
   const item = req.body.item;
 
-   if(item === "") {
-     res.redirect("/user/"+userId);
-
-   } else {
+  if (item === "") {
+    res.redirect("/user/" + userId);
+  } else {
     userModel.updateOne(
       { _id: userId },
       { $push: { toDoItem: item } },
@@ -197,27 +205,35 @@ app.post("/submit", (req, res) => {
         }
       }
     );
-   }
+  }
 });
 
 app.post("/delete", (req, res) => {
   const item = req.body.index;
   const userID = req.body.userID;
 
-  userModel.updateOne({_id: userID}, {$pull: {toDoItem: {$in: [item]}}}, (err, result)=>{
-    if(!err){
-      res.redirect("/user/"+userId)
-    }else {
-      console.log(err);
+  userModel.updateOne(
+    { _id: userID },
+    { $pull: { toDoItem: { $in: [item] } } },
+    (err, result) => {
+      if (!err) {
+        res.redirect("/user/" + userId);
+      } else {
+        console.log(err);
+      }
     }
-  });
+  );
 });
 
 app.post("/logout", (req, res) => {
-  isLoggedIn = false;
+  res.setHeader("set-cookie", ["isLoggedIn= false"]);
   res.redirect("/");
 });
 
-const PORT = process.env.PORT || 3000
+app.get("*", (req, res)=>{
+  res.status(404).send("Error 404");
+})
 
-app.listen(PORT, () => console.log("Server is running on "+PORT));
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => console.log("Server is running on"+PORT));

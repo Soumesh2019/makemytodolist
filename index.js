@@ -28,7 +28,7 @@ function greeting() {
 
 function todaysDate() {
   let day = new Date().getDate();
-  let month = new Date().getUTCMonth();
+  let month =(new Date().getUTCMonth())+1;
   let year = new Date().getUTCFullYear();
   let date = day + "-" + month + "-" + year;
 

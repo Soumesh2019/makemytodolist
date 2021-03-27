@@ -36,7 +36,7 @@ function todaysDate() {
 }
 
 mongoose.connect(
-  "mongodb+srv://admin-sk0564845:xsXsnqCXzYdvXQji@mycluster.m3q9x.mongodb.net/toDoDB",
+  "mongodb+srv://admin-sk0564845:process.env.PASSWORD@mycluster.m3q9x.mongodb.net/toDoDB",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
